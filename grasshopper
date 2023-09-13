@@ -1,0 +1,96 @@
+#!/bin/bash
+
+set -e
+set -x
+
+TESTED_DOCKER_VER="24.0.6"
+REPO="grasshopper"
+TAG="latest"
+IMAGE="${REPO}"":""${TAG}"
+
+check_docker() {
+  if ! type -P docker &>/dev/null; then
+    printf "Docker not installed or not in path!\n"
+    printf "Nothing we can do!\n"
+    printf "Exiting!\n"
+
+    exit 1
+  fi
+
+  DOCKER_VER="$(docker --version)"
+  FOUND_VER=0
+  for VER in "${TESTED_DOCKER_VER}"; do
+    if [[ "${DOCKER_VER}" == *"${VER}"* ]]; then
+      FOUND_VER=1
+    fi
+  done
+
+  if [[ ! "${FOUND_VER}" ]]; then
+    printf "You are running on an untested version of docker!\n"
+    printf "This might be fine, but if you encounter errors with\n"
+    printf "building or running the image, please try to use a tested\n"
+    printf "version of Docker before filing a bug!\n"
+  fi
+}
+
+check_repo() {
+  REPOS="$(docker image ls --format '{{json .Repository}}')"
+
+  if [[ "${REPOS}" == *"${REPO}"* ]] && [[ ! -z "${REPOS}" ]]; then
+    FOUND_REPO=1
+  else
+    FOUND_REPO=0
+  fi
+}
+
+check_image() {
+  IMAGES="$(docker container ls --format '{{json .Image}}')"
+
+  if [[ "${IMAGES}" == *"${IMAGE}"* ]] && [[ ! -z "${IMAGES}" ]]; then
+    FOUND_IMAGE=1
+  else
+    FOUND_IMAGE=0
+  fi
+}
+
+main() {
+  check_docker
+  
+  check_repo
+  if [[ ! "${FOUND_REPO}" ]]; then
+    docker build --build-arg HOME="/root" -t "grasshopper:latest" .
+  fi
+  
+  check_image
+  if [[ "${FOUND_IMAGE}" ]]; then
+    if [[ "${@}" == *"-k"* ]]; then
+      docker kill grasshopper || :
+
+      docker run\
+        --network=host\
+        --rm\
+        -d\
+        -i\
+        -t\
+        --hostname "grasshopper"\
+        --name "grasshopper"\
+        "${IMAGE}"
+    fi
+
+    docker exec -it grasshopper /bin/bash
+  else
+    docker run\
+      --network=host\
+      --rm\
+      -d\
+      -i\
+      -t\
+      --hostname "grasshopper"\
+      --name "grasshopper"\
+      "${IMAGE}"
+
+    docker exec -it grasshopper /bin/bash
+  fi
+}
+
+main "${@}"

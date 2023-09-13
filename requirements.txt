@@ -1,0 +1,8 @@
+angr
+gmpy
+Pillow
+pwntools
+pycryptodome
+ropper
+unicorn
+xortool
