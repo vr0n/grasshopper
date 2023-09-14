@@ -26,6 +26,8 @@ ARG WORDLIST_DIR_MAIN="/data/wordlists"
 ARG WORDLIST_DIR_LINK="/usr/share/wordlists"
 ARG ROCKYOU_PATH="${WORDLIST_DIR_MAIN}""/Passwords/Leaked-Databases"
 
+WORKDIR "${HOME}""/workbench"
+
 # Update everything
 RUN dpkg --add-architecture i386 &&\
     apt -y update  &&\
@@ -38,6 +40,7 @@ COPY ./configs/.config "${HOME}"/.config
 
 # Add a bunch of random things we may need
 RUN apt -y install\
+    bat\
     checksec\
     clang\
     file\
@@ -50,6 +53,7 @@ RUN apt -y install\
     postgresql\
     procps\
     software-properties-common\
+    strace\
     trash-cli\
     tmux\
     xz-utils

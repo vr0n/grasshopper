@@ -1,12 +1,44 @@
 #!/bin/bash
 
 set -e
-set -x
 
 TESTED_DOCKER_VER="24.0.6"
 REPO="grasshopper"
+NAME="grasshopper"
 TAG="latest"
 IMAGE="${REPO}"":""${TAG}"
+WORKBENCH="/root/workbench"
+
+usage() {
+  printf "Usage: %s [OPTIONS]\n" "${0}"
+  printf "OPTIONS:\n"
+  printf "  -b    Rebuild the container before running (don't do this)\n"
+  printf "  -h    Print this usage message and exit\n"
+  printf "  -k    Kill any containers that exist before running\n"
+  printf "\n\n"
+  printf "Grasshopper is intended to be a temporary workbench for solving\n"
+  printf "CTF challenges. The 'workbench' is host volume mounted so you can\n"
+  printf "copy files from your host into it and interact with them from the\n"
+  printf "container and vice versa. This is your starting point when executing\n"
+  printf "the container. This directory can be moved or deleted or cleaned out\n"
+  printf "(such as moving the challenges you worked on after a CTF out of it)\n"
+  printf "without any issues. Grasshopper includes several tools, but here are\n"
+  printf "some of the highlights:\n"
+  printf "  - angr\n"
+  printf "  - binwalk\n"
+  printf "  - gdb with gef\n"
+  printf "  - hashcat\n"
+  printf "  - radare2 tool suite\n"
+  printf "  - SecLists wordlists (found under /data/wordlists)\n"
+  printf "  - pwntools\n"
+  printf "  - python3\n"
+  printf "  - qemu user emulation binaries\n"
+  printf "  - strace\n"
+  printf "  - vim/neovim with useful plugins\n"
+  printf "  - much, much more!\n"
+
+  exit 0
+}
 
 check_docker() {
   if ! type -P docker &>/dev/null; then
@@ -53,21 +85,38 @@ check_image() {
   fi
 }
 
+check_name() {
+  NAMES="$(docker container ls --format '{{json .Names}}')"
+
+  if [[ "${NAMES}" == *"${NAME}"* ]] && [[ ! -z "${NAMES}" ]]; then
+    FOUND_NAME=1
+  else
+    FOUND_NAME=0
+  fi
+}
+
 docker_build() {
   docker build --build-arg HOME="/root" -t "${IMAGE}" .
 }
 
 docker_exec() {
-  docker exec -it "${REPO}" /bin/bash
+  docker exec -it "${NAME}" /bin/bash
 }
 
 docker_kill() {
-  docker kill "${REPO}" || :
+  docker kill "${NAME}" || :
 }
 
 docker_run() {
+  LOCAL_WORKBENCH="$(pwd)""/workbench"
+
+  if [ ! -d "${LOCAL_WORKBENCH}" ]; then
+    mkdir "${LOCAL_WORKBENCH}" || exit 1 # Probably a perms issue...
+  fi
+
   docker run\
     --network=host\
+    -v "${LOCAL_WORKBENCH}":"${WORKBENCH}"\
     --rm\
     -d\
     -i\
@@ -81,7 +130,7 @@ main() {
   check_docker
   
   check_repo
-  if [[ ! "${FOUND_REPO}" ]] || [[ "${@}" == *"-b"* ]]; then
+  if [[ "${FOUND_REPO}" == "0" ]] || [[ "${@}" == *"-b"* ]]; then
     printf "Building a new image!\n"
     printf "This is going to take some time...\n"
     printf "Grab a coffee or a smoke and relax...\n"
@@ -90,7 +139,8 @@ main() {
   fi
   
   check_image
-  if [[ "${FOUND_IMAGE}" ]]; then
+  check_name
+  if [[ "${FOUND_IMAGE}" == "1" ]] || [[ "${FOUND_NAME}" == "1" ]]; then
     if [[ "${@}" == *"-k"* ]]; then
       docker_kill
       docker_run
@@ -102,5 +152,9 @@ main() {
     docker_exec
   fi
 }
+
+if [[ "${@}" == *"-h"* ]]; then
+  usage
+fi
 
 main "${@}"

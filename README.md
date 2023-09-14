@@ -27,9 +27,31 @@ If you have to build the image, this will take about 10-20 minutes even with a g
 ## Usage
 
 ```
-Usage: grasshopper [OPTIONS]
-
+Usage: ./grasshopper [OPTIONS]
 OPTIONS:
+  -b    Rebuild the container before running (don't do this)
+  -h    Print this usage message and exit
   -k    Kill any containers that exist before running
-  -b    Re-build the container before running (don't do this)
+
+
+Grasshopper is intended to be a temporary workbench for solving
+CTF challenges. The 'workbench' is host volume mounted so you can
+copy files from your host into it and interact with them from the
+container and vice versa. This is your starting point when executing
+the container. This directory can be moved or deleted or cleaned out
+(such as moving the challenges you worked on after a CTF out of it)
+without any issues. Grasshopper includes several tools, but here are
+some of the highlights:
+  - angr
+  - binwalk
+  - gdb with gef
+  - hashcat
+  - radare2 tool suite
+  - SecLists wordlists (found under /data/wordlists)
+  - pwntools
+  - python3
+  - qemu user emulation binaries
+  - strace
+  - vim/neovim with useful plugins
+  - much, much more!
 ```
