@@ -28,6 +28,7 @@ usage() {
   printf "  - binwalk\n"
   printf "  - gdb with gef\n"
   printf "  - hashcat\n"
+  printf "  - nmap\n"
   printf "  - radare2 tool suite\n"
   printf "  - SecLists wordlists (found under /data/wordlists)\n"
   printf "  - pwntools\n"
@@ -95,16 +96,17 @@ check_name() {
   fi
 }
 
-docker_build() {
-  docker build --build-arg HOME="/root" -t "${IMAGE}" .
-}
-
 docker_exec() {
   docker exec -it "${NAME}" /bin/bash
 }
 
 docker_kill() {
   docker kill "${NAME}" || :
+}
+
+docker_build() {
+  docker_kill
+  docker build --build-arg HOME="/root" -t "${IMAGE}" .
 }
 
 docker_run() {
@@ -117,6 +119,7 @@ docker_run() {
   docker run\
     --network=host\
     -v "${LOCAL_WORKBENCH}":"${WORKBENCH}"\
+    -e LANG="en_US.UTF-8"\
     --rm\
     -d\
     -i\

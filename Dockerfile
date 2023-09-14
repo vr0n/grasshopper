@@ -1,10 +1,11 @@
-FROM debian:11.7
+FROM ubuntu:22.04
 
 # environment variables
+ENV DEBIAN_FRONTEND="noninteractive"
 ENV HOME="/root"
-#ENV LANG="en_US.UTF-8"
-#ENV LC_ALL="en_US.UTF-8"
-#ENV LC_CTYPE="en_US.UTF-8"
+ENV XDG_DATA_HOME="/root/.config"
+ENV LC_ALL="en_US.UTF-8"
+ENV LC_CTYPE="en_US.UTF-8"
 ENV TERM="xterm-256color"
 ENV SHELL="/bin/bash"
 ENV VIRTUAL_ENV="${HOME}""/""${VENV}"
@@ -56,23 +57,25 @@ RUN apt -y install\
     strace\
     trash-cli\
     tmux\
-    xz-utils
-    #locale-gen en_US.UTF-8 &&\
-    #dpkg-reconfigure --frontend=noninteractive locales
+    xz-utils &&\
+    sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
+    locale-gen en_US.UTF-8 &&\
+    dpkg-reconfigure locales
 
 # Add networking tools
 RUN apt -y install\
     curl\
     net-tools\
+    nmap\
     subnetcalc\
     wget
 
 # Add text editors and configurations
 RUN apt -y install vim neovim &&\
-    curl -fLo "${HOME}"/.config/nvim/autoloload/plug.vim\
-    --create-dirs\
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim\
-    && nvim +PlugInstall +q +UpdateRemotePlugins +q
+    curl -fLo\
+    ~/.config/nvim/autoload/plug.vim --create-dirs\
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim &&\
+    nvim +PlugInstall +q +UpdateRemotePlugins +q
 
 # Add everything we will probably need with python
 RUN apt -y install\
@@ -122,21 +125,22 @@ RUN cd /tmp &&\
     tar -xzf rockyou.txt.tar.gz
 
 # Install hashcat
-# And hashcar wrapper for ease of use
+# And hashcat wrapper for ease of use
 RUN apt -y install hashcat
 # TODO: hashcat wrapper script
 
 # Install metasploit
 # And run the stupidest hack ever to make msfdb "work" for us
-RUN curl "${MSF}" > "${MSF_SCRIPT}" &&\
-    chmod +x "${MSF_SCRIPT}" &&\
-    ./"${MSF_SCRIPT}" &&\
-    sed -i 's/kali/grasshopper/' "${MSF_PATH}""/msfdb" &&\
-    sed -i 's/\/etc\/os-release/\/etc\/hostname/' "${MSF_PATH}""/msfdb"
+#RUN curl "${MSF}" > "${MSF_SCRIPT}" &&\
+#    chmod +x "${MSF_SCRIPT}" &&\
+#    ./"${MSF_SCRIPT}" &&\
+#    sed -i 's/kali/grasshopper/' "${MSF_PATH}""/msfdb" &&\
+#    sed -i 's/\/etc\/os-release/\/etc\/hostname/' "${MSF_PATH}""/msfdb"
+    # TODO: msfdb init is still failing in the script...
     #msfdb init
 
 # Install Radare2
-# And we have to keep the source dir around, so don't delete it
+# And we have to keep the source dir around, so put it somewhere permanent
 RUN mkdir /radare &&\
     cd /radare &&\
     git clone "${R2}" &&\

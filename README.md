@@ -46,6 +46,7 @@ some of the highlights:
   - binwalk
   - gdb with gef
   - hashcat
+  - nmap
   - radare2 tool suite
   - SecLists wordlists (found under /data/wordlists)
   - pwntools

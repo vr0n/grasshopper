@@ -27,7 +27,8 @@ force_color_prompt=yes
 color_prompt=yes
 
 if [ "$color_prompt" = yes ]; then
-    		PS1='${debian_chroot:+($debian_chroot)}\[\033[00;32m\][\[\033[01;31m\]\u\[\033[00;32m\]@\[\033[01;31m\]\h\[\033[00;32m\]]\[\033[00;32m\][\[\033[01;34m\]\w\[\033[00m\]\[\033[00;32m\]]\n\[\033[01;32m\]>>\[\033[00m\] '
+    		#PS1='${debian_chroot:+($debian_chroot)}\[\033[00;32m\][\[\033[01;31m\]\u\[\033[00;32m\]@\[\033[01;31m\]\h\[\033[00;32m\]]\[\033[00;32m\][\[\033[01;34m\]\w\[\033[00m\]\[\033[00;32m\]]\n\[\033[01;32m\]>>\[\033[00m\] '
+    		PS1="\[$(tput setaf 130)\][\[$(tput setaf 34)\]\u\[$(tput setaf 40)\]@\[$(tput setaf 46)\]\h\[$(tput setaf 130)\]][\[$(tput setaf 154)\]\w\[$(tput setaf 130)\]]\n>>\[$(tput sgr0)\] "
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
@@ -135,6 +136,7 @@ alias te="trash-empty"
 alias tl="trash-list"
 alias tp="trash-put"
 alias when="history | grep"
+alias vim="nvim"
 
 # batcat special case
 if type batcat 1>/dev/null 2>/dev/null; then
