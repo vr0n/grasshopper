@@ -2,8 +2,9 @@ FROM debian:11.7
 
 # environment variables
 ENV HOME="/root"
-ENV LC_ALL="en_US.UTF-8"
-ENV LC_CTYPE="en_US.UTF-8"
+#ENV LANG="en_US.UTF-8"
+#ENV LC_ALL="en_US.UTF-8"
+#ENV LC_CTYPE="en_US.UTF-8"
 ENV TERM="xterm-256color"
 ENV SHELL="/bin/bash"
 ENV VIRTUAL_ENV="${HOME}""/""${VENV}"
@@ -30,7 +31,12 @@ RUN dpkg --add-architecture i386 &&\
     apt -y update  &&\
     apt -y upgrade
 
-# Add a bunch of random things we need
+# Add configurations
+COPY ./configs/* "${HOME}"/
+COPY ./configs/.* "${HOME}"/
+COPY ./configs/.config "${HOME}"/.config
+
+# Add a bunch of random things we may need
 RUN apt -y install\
     checksec\
     clang\
@@ -44,10 +50,11 @@ RUN apt -y install\
     postgresql\
     procps\
     software-properties-common\
+    trash-cli\
     tmux\
-    xz-utils &&\
-    locale-gen en_US.UTF-8 &&\
-    dpkg-reconfigure --frontend=noninteractive locales
+    xz-utils
+    #locale-gen en_US.UTF-8 &&\
+    #dpkg-reconfigure --frontend=noninteractive locales
 
 # Add networking tools
 RUN apt -y install\
@@ -55,9 +62,6 @@ RUN apt -y install\
     net-tools\
     subnetcalc\
     wget
-
-# Add configurations
-COPY ./configs/* "${HOME}"/
 
 # Add text editors and configurations
 RUN apt -y install vim neovim &&\
@@ -114,7 +118,9 @@ RUN cd /tmp &&\
     tar -xzf rockyou.txt.tar.gz
 
 # Install hashcat
+# And hashcar wrapper for ease of use
 RUN apt -y install hashcat
+# TODO: hashcat wrapper script
 
 # Install metasploit
 # And run the stupidest hack ever to make msfdb "work" for us

@@ -53,43 +53,53 @@ check_image() {
   fi
 }
 
+docker_build() {
+  docker build --build-arg HOME="/root" -t "${IMAGE}" .
+}
+
+docker_exec() {
+  docker exec -it "${REPO}" /bin/bash
+}
+
+docker_kill() {
+  docker kill "${REPO}" || :
+}
+
+docker_run() {
+  docker run\
+    --network=host\
+    --rm\
+    -d\
+    -i\
+    -t\
+    --hostname "grasshopper"\
+    --name "grasshopper"\
+    "${IMAGE}"
+}
+
 main() {
   check_docker
   
   check_repo
-  if [[ ! "${FOUND_REPO}" ]]; then
-    docker build --build-arg HOME="/root" -t "grasshopper:latest" .
+  if [[ ! "${FOUND_REPO}" ]] || [[ "${@}" == *"-b"* ]]; then
+    printf "Building a new image!\n"
+    printf "This is going to take some time...\n"
+    printf "Grab a coffee or a smoke and relax...\n"
+
+    docker_build
   fi
   
   check_image
   if [[ "${FOUND_IMAGE}" ]]; then
     if [[ "${@}" == *"-k"* ]]; then
-      docker kill grasshopper || :
-
-      docker run\
-        --network=host\
-        --rm\
-        -d\
-        -i\
-        -t\
-        --hostname "grasshopper"\
-        --name "grasshopper"\
-        "${IMAGE}"
+      docker_kill
+      docker_run
     fi
 
-    docker exec -it grasshopper /bin/bash
+    docker_exec
   else
-    docker run\
-      --network=host\
-      --rm\
-      -d\
-      -i\
-      -t\
-      --hostname "grasshopper"\
-      --name "grasshopper"\
-      "${IMAGE}"
-
-    docker exec -it grasshopper /bin/bash
+    docker_run
+    docker_exec
   fi
 }
 
