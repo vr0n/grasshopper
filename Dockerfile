@@ -12,7 +12,7 @@ ENV VIRTUAL_ENV="${HOME}""/""${VENV}"
 
 # build variables
 ARG BINWALK="https://github.com/devttys0/binwalk.git"
-ARG GDB="gdb-14.0.50.20230913"
+ARG GDB="gdb-13.0.50.20221218"
 ARG GDB_EXT=".tar.xz"
 ARG HOME="/root"
 ARG MSF="https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb"
@@ -42,33 +42,42 @@ COPY ./configs/.config "${HOME}"/.config
 # Add a bunch of random things we may need
 RUN apt -y install\
     bat\
+    ca-certificates\
     checksec\
     clang\
+    curl\
     file\
     git\
+    gnupg\
     libexpat1-dev\
     libgmp-dev\
     libmpfr-dev\
     locales\
     make\
+    net-tools\
+    nmap\
     postgresql\
     procps\
+    ruby\
     software-properties-common\
     strace\
+    subnetcalc\
     trash-cli\
     tmux\
+    wget\
     xz-utils &&\
+    gem install bundler &&\
+    mkdir -p ~/.local/share/Trash &&\
     sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
     locale-gen en_US.UTF-8 &&\
     dpkg-reconfigure locales
 
-# Add networking tools
-RUN apt -y install\
-    curl\
-    net-tools\
-    nmap\
-    subnetcalc\
-    wget
+# Add NodeJS
+RUN cd /tmp &&\
+    curl -sL install-node.vercel.app/lts > ./lts &&\
+    chmod +x ./lts &&\
+    ./lts --yes &&\
+    rm -rf ./lts
 
 # Add text editors and configurations
 RUN apt -y install vim neovim &&\
@@ -95,6 +104,10 @@ RUN python3 -m pip install -r "${PIP_FILE}" &&\
 
 # Add GEF to GDB
 # Sadly, we have to install GDB ourselves for python support
+RUN /bin/bash -c "$(curl -fsSL https://gef.blah.cat/sh)" &&\
+    git clone https://github.com/scwuaptx/Pwngdb.git --depth 1 ~/Pwngdb &&\
+    cat ~/Pwngdb/.gdbinit >> ~/.gdbinit
+
 RUN cd /tmp &&\
   wget https://sourceware.org/pub/gdb/snapshots/current/${GDB}${GDB_EXT} &&\
   tar xvf "${GDB}""${GDB_EXT}" &&\
@@ -104,9 +117,6 @@ RUN cd /tmp &&\
   make install &&\
   cd /tmp &&\
   rm -rf /tmp/"${GDB}"*
-
-
-RUN /bin/bash -c "$(curl -fsSL https://gef.blah.cat/sh)"
 
 # Install binwalk
 RUN cd /tmp &&\
@@ -130,14 +140,11 @@ RUN apt -y install hashcat
 # TODO: hashcat wrapper script
 
 # Install metasploit
-# And run the stupidest hack ever to make msfdb "work" for us
-#RUN curl "${MSF}" > "${MSF_SCRIPT}" &&\
-#    chmod +x "${MSF_SCRIPT}" &&\
-#    ./"${MSF_SCRIPT}" &&\
-#    sed -i 's/kali/grasshopper/' "${MSF_PATH}""/msfdb" &&\
-#    sed -i 's/\/etc\/os-release/\/etc\/hostname/' "${MSF_PATH}""/msfdb"
-    # TODO: msfdb init is still failing in the script...
-    #msfdb init
+RUN cd /tmp &&\
+    curl "${MSF}" > "${MSF_SCRIPT}" &&\
+    chmod +x "${MSF_SCRIPT}" &&\
+    ./"${MSF_SCRIPT}" &&\
+    rm -rf ./"${MSF_SCRIPT}"
 
 # Install Radare2
 # And we have to keep the source dir around, so put it somewhere permanent

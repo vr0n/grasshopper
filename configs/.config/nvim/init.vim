@@ -1,6 +1,6 @@
 " plugzzz
 call plug#begin()
-  Plug 'neaclide/coc.nvim', {'branch': 'release'}
+  Plug 'neoclide/coc.nvim', {'branch': 'release'}
 call plug#end()
 
 " undofile
