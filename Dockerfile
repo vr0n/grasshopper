@@ -67,6 +67,7 @@ RUN apt -y install\
     trash-cli\
     tmux\
     wget\
+    wine\
     xz-utils &&\
     gem install bundler &&\
     mkdir -p ~/.local/share/Trash &&\
