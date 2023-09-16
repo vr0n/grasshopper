@@ -49,11 +49,13 @@ RUN apt -y install\
     file\
     git\
     gnupg\
+    hexedit\
     libexpat1-dev\
     libgmp-dev\
     libmpfr-dev\
     locales\
     make\
+    netcat\
     net-tools\
     nmap\
     postgresql\
