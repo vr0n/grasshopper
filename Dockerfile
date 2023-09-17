@@ -29,49 +29,70 @@ ARG ROCKYOU_PATH="${WORDLIST_DIR_MAIN}""/Passwords/Leaked-Databases"
 
 WORKDIR "${HOME}""/workbench"
 
-# Update everything
-RUN dpkg --add-architecture i386 &&\
-    apt -y update  &&\
-    apt -y upgrade
-
 # Add configurations
 COPY ./configs/* "${HOME}"/
 COPY ./configs/.* "${HOME}"/
 COPY ./configs/.config "${HOME}"/.config
 
-# Add a bunch of random things we may need
+# Update everything
+RUN dpkg --add-architecture i386 &&\
+    apt -y update  &&\
+    apt -y upgrade
+
+# Add a bunch of random things we may need from apt.
+# For some reason, when I try to install too much at once,
+# I get apt errors. So let's break it up:
+
+# Start with some reandom things we need
 RUN apt -y install\
     bat\
     ca-certificates\
-    checksec\
-    clang\
-    curl\
     file\
     git\
     gnupg\
-    hexedit\
-    libexpat1-dev\
-    libgmp-dev\
-    libmpfr-dev\
     locales\
-    make\
+    software-properties-common\
+    tmux\
+    trash-cli &&\
+    mkdir -p ~/.local/share/Trash
+
+# Next, networking tools
+RUN apt -y install\
+    curl\
     netcat\
     net-tools\
     nmap\
+    subnetcalc\
+    wget
+
+# Next, some programming tools
+RUN apt -y install\
+    clang\
+    make\
+    ruby &&\
+    gem install bundler
+
+# Next, some libraries we need
+RUN apt -y install\
+    libexpat1-dev\
+    libgmp-dev\
+    libmpfr-dev
+
+# Next, some things we need for hacking
+RUN apt -y install\
+    checksec\
+    hashcat\
+    hexedit\
     postgresql\
     procps\
-    ruby\
-    software-properties-common\
+    qemu\
+    qemu-user-static\
     strace\
-    subnetcalc\
-    trash-cli\
-    tmux\
-    wget\
     wine\
-    xz-utils &&\
-    gem install bundler &&\
-    mkdir -p ~/.local/share/Trash &&\
-    sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
+    xz-utils
+
+# Fix our locale
+RUN sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
     locale-gen en_US.UTF-8 &&\
     dpkg-reconfigure locales
 
@@ -137,11 +158,6 @@ RUN cd /tmp &&\
     cd "${ROCKYOU_PATH}" &&\
     tar -xzf rockyou.txt.tar.gz
 
-# Install hashcat
-# And hashcat wrapper for ease of use
-RUN apt -y install hashcat
-# TODO: hashcat wrapper script
-
 # Install metasploit
 RUN cd /tmp &&\
     curl "${MSF}" > "${MSF_SCRIPT}" &&\
@@ -156,9 +172,6 @@ RUN mkdir /radare &&\
     git clone "${R2}" &&\
     cd "${R2_PATH}" &&\
     ./install.sh
-
-# Install qemu user-emulation mode things
-RUN apt -y install qemu qemu-user-static
 
 # Cleanup
 RUN apt clean &&\
