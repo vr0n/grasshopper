@@ -2,6 +2,13 @@
 
 set -e
 
+# Color prompts
+BOLD='\033[1m'
+UNBOLD='\033[0m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+RESET='\033[0m'
+
 TESTED_DOCKER_VER="24.0.6"
 REPO="grasshopper"
 NAME="grasshopper"
@@ -41,11 +48,19 @@ usage() {
   exit 0
 }
 
+info() {
+  printf "${BOLD}${BLUE}  [+] %s${UNBOLD}${RESET}\n" "${1}"
+}
+
+error() {
+  printf "${BOLD}${RED}  [-] %s${UNBOLD}${RESET}\n" "${1}"
+}
+
 check_docker() {
   if ! type -P docker &>/dev/null; then
-    printf "Docker not installed or not in path!\n"
-    printf "Nothing we can do!\n"
-    printf "Exiting!\n"
+    error "Docker not installed or not in path!\n"
+    error "Nothing we can do!\n"
+    error "Exiting!\n"
 
     exit 1
   fi
@@ -59,10 +74,10 @@ check_docker() {
   done
 
   if [[ ! "${FOUND_VER}" ]]; then
-    printf "You are running on an untested version of docker!\n"
-    printf "This might be fine, but if you encounter errors with\n"
-    printf "building or running the image, please try to use a tested\n"
-    printf "version of Docker before filing a bug!\n"
+    info "You are running on an untested version of docker!\n"
+    info "This might be fine, but if you encounter errors with\n"
+    info "building or running the image, please try to use a tested\n"
+    info "version of Docker before filing a bug!\n"
   fi
 }
 
@@ -134,9 +149,9 @@ main() {
   
   check_repo
   if [[ "${FOUND_REPO}" == "0" ]] || [[ "${@}" == *"-b"* ]]; then
-    printf "Building a new image!\n"
-    printf "This is going to take some time...\n"
-    printf "Grab a coffee or a smoke and relax...\n"
+    info "Building a new image!\n"
+    info "This is going to take some time...\n"
+    info "Grab a coffee or a smoke and relax...\n"
 
     docker_build
   fi
