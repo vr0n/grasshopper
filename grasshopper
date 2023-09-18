@@ -127,10 +127,16 @@ docker_exec() {
 }
 
 docker_kill() {
+  info "Attempting to kill image now...\n"
+
   docker kill "${NAME}" || :
 }
 
 docker_build() {
+  info "Building a new image!"
+  info "This is going to take some time..."
+  info "Grab a coffee or a smoke and relax..."
+
   docker_kill
   docker build --build-arg HOME="/root" -t "${IMAGE}" .
 }
@@ -156,39 +162,44 @@ docker_run() {
 }
 
 main() {
-  check_docker
-  
-  check_repo
-  if [[ "${FOUND_REPO}" == "0" ]] || [[ "${@}" == *"-b"* ]]; then
-    info "Building a new image!"
-    info "This is going to take some time..."
-    info "Grab a coffee or a smoke and relax..."
+  for ARG in "${@}"; do
+    if [[ "${ARG}" == "-"* ]]; then
 
+      # Commands to exit after
+      if [[ "${ARG}" == *"h"* ]]; then
+        usage
+        exit 0
+      fi
+      if [[ "${ARG}" == *"z"* ]]; then
+        secret
+        exit 0
+      fi
+
+      # Kill and Build
+      if [[ "${ARG}" == *"k"* ]]; then
+        docker_kill
+      fi
+      if [[ "${ARG}" == *"b"* ]]; then
+        docker_build
+      fi
+    fi
+  done
+
+  # Any other option
+  check_repo
+  if [[ "${FOUND_REPO}" != "1" ]]; then
     docker_build
   fi
-  
+
   check_image
   check_name
-  if [[ "${FOUND_IMAGE}" == "1" ]] || [[ "${FOUND_NAME}" == "1" ]]; then
-    if [[ "${@}" == *"-k"* ]]; then
-      docker_kill
-      docker_run
-    fi
-
-    docker_exec
-  else
+  if [[ "${FOUND_IMAGE}" != "1" ]] ||
+    [[ "${FOUND_NAME}" != "1" ]]; then
     docker_run
-    docker_exec
   fi
-}
 
-if [[ "${@}" == *"-z"* ]]; then
-  secret
+  docker_exec
   exit 0
-fi
-
-if [[ "${@}" == *"-h"* ]]; then
-  usage
-fi
+}
 
 main "${@}"
