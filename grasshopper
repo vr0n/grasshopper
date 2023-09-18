@@ -56,11 +56,22 @@ error() {
   printf "${BOLD}${RED}  [-] %s${UNBOLD}${RESET}\n" "${1}"
 }
 
+secret() {
+  info "I tailored the age to fit me."
+  info "We walked to the south, raising dust above the steppe;"
+  info "The tall weeds fumed; the grasshopper danced,"
+  info "Touching its antenna to the horse-shoes - and it prophesied,"
+  info "Threatening me with destruction, like a monk."
+  info "I strapped my fate to the saddle;"
+  info "And even now, in these coming times,"
+  info "I stand up in the stirrups like a child."
+}
+
 check_docker() {
   if ! type -P docker &>/dev/null; then
-    error "Docker not installed or not in path!\n"
-    error "Nothing we can do!\n"
-    error "Exiting!\n"
+    error "Docker not installed or not in path!"
+    error "Nothing we can do!"
+    error "Exiting!"
 
     exit 1
   fi
@@ -74,10 +85,10 @@ check_docker() {
   done
 
   if [[ ! "${FOUND_VER}" ]]; then
-    info "You are running on an untested version of docker!\n"
-    info "This might be fine, but if you encounter errors with\n"
-    info "building or running the image, please try to use a tested\n"
-    info "version of Docker before filing a bug!\n"
+    info "You are running on an untested version of docker!"
+    info "This might be fine, but if you encounter errors with"
+    info "building or running the image, please try to use a tested"
+    info "version of Docker before filing a bug!"
   fi
 }
 
@@ -149,9 +160,9 @@ main() {
   
   check_repo
   if [[ "${FOUND_REPO}" == "0" ]] || [[ "${@}" == *"-b"* ]]; then
-    info "Building a new image!\n"
-    info "This is going to take some time...\n"
-    info "Grab a coffee or a smoke and relax...\n"
+    info "Building a new image!"
+    info "This is going to take some time..."
+    info "Grab a coffee or a smoke and relax..."
 
     docker_build
   fi
@@ -170,6 +181,11 @@ main() {
     docker_exec
   fi
 }
+
+if [[ "${@}" == *"-z"* ]]; then
+  secret
+  exit 0
+fi
 
 if [[ "${@}" == *"-h"* ]]; then
   usage
