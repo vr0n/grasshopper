@@ -5,9 +5,10 @@ set -e
 # Color prompts
 BOLD='\033[1m'
 UNBOLD='\033[0m'
+RESET='\033[0m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
-RESET='\033[0m'
+YELLOW='\033[33m'
 
 TESTED_DOCKER_VER="24.0.6"
 REPO="grasshopper"
@@ -54,23 +55,27 @@ usage() {
   exit 0
 }
 
-info() {
+log() {
   printf "${BOLD}${BLUE}  [+] %s${UNBOLD}${RESET}\n" "${1}"
 }
 
+info() {
+  printf "${BOLD}${YELLOW}  [-] %s${UNBOLD}${RESET}\n" "${1}"
+}
+
 error() {
-  printf "${BOLD}${RED}  [-] %s${UNBOLD}${RESET}\n" "${1}"
+  printf "${BOLD}${RED}  [!] %s${UNBOLD}${RESET}\n" "${1}"
 }
 
 secret() {
-  info "I tailored the age to fit me."
-  info "We walked to the south, raising dust above the steppe;"
-  info "The tall weeds fumed; the grasshopper danced,"
-  info "Touching its antenna to the horse-shoes - and it prophesied,"
-  info "Threatening me with destruction, like a monk."
-  info "I strapped my fate to the saddle;"
-  info "And even now, in these coming times,"
-  info "I stand up in the stirrups like a child."
+  log "I tailored the age to fit me."
+  log "We walked to the south, raising dust above the steppe;"
+  log "The tall weeds fumed; the grasshopper danced,"
+  log "Touching its antenna to the horse-shoes - and it prophesied,"
+  log "Threatening me with destruction, like a monk."
+  log "I strapped my fate to the saddle;"
+  log "And even now, in these coming times,"
+  log "I stand up in the stirrups like a child."
 }
 
 check_docker() {
@@ -91,10 +96,10 @@ check_docker() {
   done
 
   if [[ ! "${FOUND_VER}" ]]; then
-    info "You are running on an untested version of docker!"
-    info "This might be fine, but if you encounter errors with"
-    info "building or running the image, please try to use a tested"
-    info "version of Docker before filing a bug!"
+    log "You are running on an untested version of docker!"
+    log "This might be fine, but if you encounter errors with"
+    log "building or running the image, please try to use a tested"
+    log "version of Docker before filing a bug!"
   fi
 }
 
@@ -133,15 +138,15 @@ docker_exec() {
 }
 
 docker_kill() {
-  info "Attempting to kill image now...\n"
+  log "Attempting to kill image now...\n"
 
   docker kill "${NAME}" || :
 }
 
 docker_build() {
-  info "Building a new image!"
-  info "This is going to take some time..."
-  info "Grab a coffee or a smoke and relax..."
+  log "Building a new image!"
+  log "This is going to take some time..."
+  log "Grab a coffee or a smoke and relax..."
 
   docker_kill
   docker build --build-arg HOME="/root" -t "${IMAGE}" .
