@@ -19,8 +19,8 @@ WORKBENCH="/root/workbench"
 usage() {
   printf "Usage: %s [OPTIONS]\n" "${0}"
   printf "OPTIONS:\n"
-  printf "  -b    Rebuild the container before running (don't do this)\n"
-  printf "  -h    Print this usage message and exit\n"
+  printf "  -b    Rebuild the container, then run (this can take 20 minutes)\n"
+  printf "  -h    Print this message and exit\n"
   printf "  -k    Kill any containers that exist before running\n"
   printf "\n\n"
   printf "Grasshopper is intended to be a temporary workbench for solving\n"
@@ -43,7 +43,13 @@ usage() {
   printf "  - qemu user emulation binaries\n"
   printf "  - strace\n"
   printf "  - vim/neovim with useful plugins\n"
-  printf "  - much, much more!\n"
+  printf "  - much, much more!\n\n"
+  printf "If you run Grasshopper with no arguments, it will either exec into\n"
+  printf "the container if it is already running, or it will first run the\n"
+  printf "container and then exec into it. If the image isn't found in your\n"
+  printf "local registry, it will first build the image, then run it, then\n"
+  printf "exec into it. Building Grasshopper can take up to 20 minutes, so\n"
+  printf "make sure it is pre-built before you need it!\n"
 
   exit 0
 }
