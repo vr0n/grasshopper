@@ -20,7 +20,8 @@ WORKBENCH="/root/workbench"
 usage() {
   printf "Usage: %s [OPTIONS]\n" "${0}"
   printf "OPTIONS:\n"
-  printf "  -b    Rebuild the container, then run (this can take 20 minutes)\n"
+  printf "  -b    Just build the container and exit (this can take 21 minutes)\n"
+  printf "  -d    Build the container before running (this can take 30 minutes)\n"
   printf "  -h    Print this message and exit\n"
   printf "  -k    Kill any containers that exist before running\n"
   printf "\n\n"
@@ -185,12 +186,16 @@ main() {
         secret
         exit 0
       fi
+      if [[ "${ARG}" == *"b"* ]]; then
+        docker_build
+        exit 0
+      fi
 
       # Kill and Build
       if [[ "${ARG}" == *"k"* ]]; then
         docker_kill
       fi
-      if [[ "${ARG}" == *"b"* ]]; then
+      if [[ "${ARG}" == *"d"* ]]; then
         docker_build
       fi
     fi
