@@ -202,12 +202,12 @@ main() {
     docker_build
   fi
 
-  check_image
-  check_name
-  if [[ "${FOUND_IMAGE}" != "1" ]] ||
-    [[ "${FOUND_NAME}" != "1" ]]; then
-    docker_run
-  fi
+  # check_image
+  # check_name
+  # if [[ "${FOUND_IMAGE}" != "1" ]] ||
+  #   [[ "${FOUND_NAME}" != "1" ]]; then
+  #   docker_run
+  # fi
 
   # docker_exec
   exit 0
