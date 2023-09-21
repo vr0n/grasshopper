@@ -1,0 +1,216 @@
+#!/bin/bash
+
+set -e
+
+# Color prompts
+BOLD='\033[1m'
+UNBOLD='\033[0m'
+RESET='\033[0m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+YELLOW='\033[33m'
+
+TESTED_DOCKER_VER="24.0.6"
+REPO="grasshopper"
+NAME="grasshopper"
+TAG="latest"
+IMAGE="${REPO}"":""${TAG}"
+WORKBENCH="/root/workbench"
+
+usage() {
+  printf "Usage: %s [OPTIONS]\n" "${0}"
+  printf "OPTIONS:\n"
+  printf "  -b    Rebuild the container, then run (this can take 20 minutes)\n"
+  printf "  -h    Print this message and exit\n"
+  printf "  -k    Kill any containers that exist before running\n"
+  printf "\n\n"
+  printf "Grasshopper is intended to be a temporary workbench for solving\n"
+  printf "CTF challenges. The 'workbench' is host volume mounted so you can\n"
+  printf "copy files from your host into it and interact with them from the\n"
+  printf "container and vice versa. This is your starting point when executing\n"
+  printf "the container. This directory can be moved or deleted or cleaned out\n"
+  printf "(such as moving the challenges you worked on after a CTF out of it)\n"
+  printf "without any issues. Grasshopper includes several tools, but here are\n"
+  printf "some of the highlights:\n"
+  printf "  - angr\n"
+  printf "  - binwalk\n"
+  printf "  - gdb with gef\n"
+  printf "  - hashcat\n"
+  printf "  - nmap\n"
+  printf "  - radare2 tool suite\n"
+  printf "  - SecLists wordlists (found under /data/wordlists)\n"
+  printf "  - pwntools\n"
+  printf "  - python3\n"
+  printf "  - qemu user emulation binaries\n"
+  printf "  - strace\n"
+  printf "  - vim/neovim with useful plugins\n"
+  printf "  - much, much more!\n\n"
+  printf "If you run Grasshopper with no arguments, it will either exec into\n"
+  printf "the container if it is already running, or it will first run the\n"
+  printf "container and then exec into it. If the image isn't found in your\n"
+  printf "local registry, it will first build the image, then run it, then\n"
+  printf "exec into it. Building Grasshopper can take up to 20 minutes, so\n"
+  printf "make sure it is pre-built before you need it!\n"
+
+  exit 0
+}
+
+log() {
+  printf "${BOLD}${BLUE}  [+] %s${UNBOLD}${RESET}\n" "${1}"
+}
+
+info() {
+  printf "${BOLD}${YELLOW}  [-] %s${UNBOLD}${RESET}\n" "${1}"
+}
+
+error() {
+  printf "${BOLD}${RED}  [!] %s${UNBOLD}${RESET}\n" "${1}"
+}
+
+secret() {
+  log "I tailored the age to fit me."
+  log "We walked to the south, raising dust above the steppe;"
+  log "The tall weeds fumed; the grasshopper danced,"
+  log "Touching its antenna to the horse-shoes - and it prophesied,"
+  log "Threatening me with destruction, like a monk."
+  log "I strapped my fate to the saddle;"
+  log "And even now, in these coming times,"
+  log "I stand up in the stirrups like a child."
+}
+
+check_docker() {
+  if ! type -P docker &>/dev/null; then
+    error "Docker not installed or not in path!"
+    error "Nothing we can do!"
+    error "Exiting!"
+
+    exit 1
+  fi
+
+  DOCKER_VER="$(docker --version)"
+  FOUND_VER=0
+  for VER in "${TESTED_DOCKER_VER}"; do
+    if [[ "${DOCKER_VER}" == *"${VER}"* ]]; then
+      FOUND_VER=1
+    fi
+  done
+
+  if [[ ! "${FOUND_VER}" ]]; then
+    log "You are running on an untested version of docker!"
+    log "This might be fine, but if you encounter errors with"
+    log "building or running the image, please try to use a tested"
+    log "version of Docker before filing a bug!"
+  fi
+}
+
+check_repo() {
+  REPOS="$(docker image ls --format '{{json .Repository}}')"
+
+  if [[ "${REPOS}" == *"${REPO}"* ]] && [[ ! -z "${REPOS}" ]]; then
+    FOUND_REPO=1
+  else
+    FOUND_REPO=0
+  fi
+}
+
+check_image() {
+  IMAGES="$(docker container ls --format '{{json .Image}}')"
+
+  if [[ "${IMAGES}" == *"${IMAGE}"* ]] && [[ ! -z "${IMAGES}" ]]; then
+    FOUND_IMAGE=1
+  else
+    FOUND_IMAGE=0
+  fi
+}
+
+check_name() {
+  NAMES="$(docker container ls --format '{{json .Names}}')"
+
+  if [[ "${NAMES}" == *"${NAME}"* ]] && [[ ! -z "${NAMES}" ]]; then
+    FOUND_NAME=1
+  else
+    FOUND_NAME=0
+  fi
+}
+
+docker_exec() {
+  docker exec -it "${NAME}" /bin/bash
+}
+
+docker_kill() {
+  log "Attempting to kill image now...\n"
+
+  docker kill "${NAME}" || :
+}
+
+docker_build() {
+  log "Building a new image!"
+  log "This is going to take some time..."
+  log "Grab a coffee or a smoke and relax..."
+
+  docker_kill
+  docker build --build-arg HOME="/root" -t "${IMAGE}" .
+}
+
+docker_run() {
+  LOCAL_WORKBENCH="$(pwd)""/workbench"
+
+  if [ ! -d "${LOCAL_WORKBENCH}" ]; then
+    mkdir "${LOCAL_WORKBENCH}" || exit 1 # Probably a perms issue...
+  fi
+
+  docker run\
+    --network=host\
+    -v "${LOCAL_WORKBENCH}":"${WORKBENCH}"\
+    -e LANG="en_US.UTF-8"\
+    --rm\
+    -d\
+    -i\
+    -t\
+    --hostname "grasshopper"\
+    --name "grasshopper"\
+    "${IMAGE}"
+}
+
+main() {
+  for ARG in "${@}"; do
+    if [[ "${ARG}" == "-"* ]]; then
+
+      # Commands to exit after
+      if [[ "${ARG}" == *"h"* ]]; then
+        usage
+        exit 0
+      fi
+      if [[ "${ARG}" == *"z"* ]]; then
+        secret
+        exit 0
+      fi
+
+      # Kill and Build
+      if [[ "${ARG}" == *"k"* ]]; then
+        docker_kill
+      fi
+      if [[ "${ARG}" == *"b"* ]]; then
+        docker_build
+      fi
+    fi
+  done
+
+  # Any other option
+  check_repo
+  if [[ "${FOUND_REPO}" != "1" ]]; then
+    docker_build
+  fi
+
+  # check_image
+  # check_name
+  # if [[ "${FOUND_IMAGE}" != "1" ]] ||
+  #   [[ "${FOUND_NAME}" != "1" ]]; then
+  #   docker_run
+  # fi
+
+  # docker_exec
+  exit 0
+}
+
+main "${@}"
