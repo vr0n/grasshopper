@@ -8,7 +8,6 @@ ENV LC_ALL="en_US.UTF-8"
 ENV LC_CTYPE="en_US.UTF-8"
 ENV TERM="xterm-256color"
 ENV SHELL="/bin/bash"
-ENV VIRTUAL_ENV="${HOME}""/""${VENV}"
 
 # build variables
 ARG BINWALK="https://github.com/devttys0/binwalk.git"
@@ -22,7 +21,6 @@ ARG R2="https://github.com/radareorg/radare2.git"
 ARG R2_PATH="/radare/radare2/sys"
 ARG PIP_FILE="${HOME}""/requirements.txt"
 ARG SECLISTS="https://github.com/danielmiessler/SecLists.git"
-ARG VENV="prophesy"
 ARG WORDLIST_DIR_MAIN="/data/wordlists"
 ARG WORDLIST_DIR_LINK="/usr/share/wordlists"
 ARG ROCKYOU_PATH="${WORDLIST_DIR_MAIN}""/Passwords/Leaked-Databases"
@@ -111,6 +109,11 @@ RUN apt -y install vim neovim &&\
     nvim +PlugInstall +q +UpdateRemotePlugins +q
 
 # Add everything we will probably need with python
+# and update PATH now to avoid issues in the future
+ENV VIRTUAL_ENV="${HOME}""/""${VENV}"
+ARG VENV="prophesy"
+ENV PATH="${VIRTUAL_ENV}""/bin:""${HOME}""/bin:""${PATH}"
+
 RUN apt -y install\
     python3\
     python3-dev\
@@ -118,9 +121,6 @@ RUN apt -y install\
     python3-pip\
     python3-venv &&\
     python3 -m venv "${VIRTUAL_ENV}"
-
-# Set this now to avoid issues in the future
-ENV PATH="${VIRTUAL_ENV}""/bin:""${PATH}"
 
 COPY ./requirements.txt "${PIP_FILE}"
 RUN python3 -m pip install -r "${PIP_FILE}" &&\

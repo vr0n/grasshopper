@@ -109,17 +109,17 @@ fi
 
 # package manager commands
 if [[ "$UNAME_DISTRO" == *"Debian"* ]] || [[ "$UNAME_DISTRO" == *"Ubuntu"* ]]; then
-  alias grab="sudo apt-get install -y"
-  alias purge="sudo apt purge -y"
-  alias remove="sudo apt autoremove -y"
-  alias update="sudo apt update -y"
-  alias upgrade="sudo apt upgrade -y"
+  alias grab="apt-get install -y"
+  alias purge="apt purge -y"
+  alias remove="apt autoremove -y"
+  alias update="apt update -y"
+  alias upgrade="apt upgrade -y"
 elif [[ "$UNAME_DISTRO" == *"Arch"* ]]; then
-  alias grab="sudo pacman -Syu"
+  alias grab="pacman -Syu"
   alias purge="echo 'update this...'"
   alias remove="echo 'update this...'"
-  alias update="sudo pacman -Syu"
-  alias upgrade="sudo pacman -Syu"
+  alias update="pacman -Syu"
+  alias upgrade="pacman -Syu"
 fi
 
 alias l="ls"
