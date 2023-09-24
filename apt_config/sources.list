@@ -1,0 +1,14 @@
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy universe
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates universe
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy multiverse
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates multiverse
+deb [arch=i386,amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+deb [arch=i386,amd64] http://security.ubuntu.com/ubuntu/ jammy-security main restricted
+deb [arch=i386,amd64] http://security.ubuntu.com/ubuntu/ jammy-security universe
+deb [arch=i386,amd64] http://security.ubuntu.com/ubuntu/ jammy-security multiverse
+
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
+deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse

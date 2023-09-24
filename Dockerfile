@@ -89,6 +89,12 @@ RUN apt -y install\
     wine\
     xz-utils
 
+# Let's decide what archs we want in the container
+# by default. Users can install additional ones
+# as needed since the packages are relatively small
+RUN apt -y install\
+    binutils-aarch64-linux-gnu
+
 # Fix our locale
 RUN sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
     locale-gen en_US.UTF-8 &&\

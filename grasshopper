@@ -2,6 +2,16 @@
 
 set -e
 
+# Where are we?
+SCRIPT_PATH="$(readlink -f $(dirname ""${BASH_SOURCE[0]}""))"
+
+# Who are we?
+DOCK_CONFIG="${SCRIPT_PATH}""/docker_config"
+USER_HOME="/root"
+WORKBENCH="${USER_HOME}""/workbench"
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+
 # Color prompts
 BOLD='\033[1m'
 UNBOLD='\033[0m'
@@ -11,20 +21,23 @@ RED='\033[0;31m'
 YELLOW='\033[33m'
 
 TESTED_DOCKER_VER="24.0.6"
-REPO="grasshopper"
+REPO="ghcr.io/vr0n/grasshopper"
 NAME="grasshopper"
 TAG="latest"
 IMAGE="${REPO}"":""${TAG}"
-WORKBENCH="/root/workbench"
 
 usage() {
   printf "Usage: %s [OPTIONS]\n" "${0}"
   printf "OPTIONS:\n"
-  printf "  -b    Just build the container and exit (this can take 21 minutes)\n"
+  printf "  -b    Just build the container and exit (this can take 30 minutes)\n"
   printf "  -d    Build the container before running (this can take 30 minutes)\n"
   printf "  -h    Print this message and exit\n"
   printf "  -k    Kill any containers that exist before running\n"
-  printf "\n\n"
+  printf "  -l    Run and exec into a locally built container. NOTE:\n"
+  printf "        This could require building the image itself, which can take\n"
+  printf "        up to 30 minutes. This option should only be used for testing\n"
+  printf "  -x    Kill any containers and exit\n"
+  printf "\n"
   printf "Grasshopper is intended to be a temporary workbench for solving\n"
   printf "CTF challenges. The 'workbench' is host volume mounted so you can\n"
   printf "copy files from your host into it and interact with them from the\n"
@@ -38,20 +51,19 @@ usage() {
   printf "  - gdb with gef\n"
   printf "  - hashcat\n"
   printf "  - nmap\n"
-  printf "  - radare2 tool suite\n"
-  printf "  - SecLists wordlists (found under /data/wordlists)\n"
   printf "  - pwntools\n"
   printf "  - python3\n"
   printf "  - qemu user emulation binaries\n"
+  printf "  - radare2 tool suite\n"
+  printf "  - SecLists wordlists (found under /data/wordlists)\n"
   printf "  - strace\n"
   printf "  - vim/neovim with useful plugins\n"
   printf "  - much, much more!\n\n"
   printf "If you run Grasshopper with no arguments, it will either exec into\n"
   printf "the container if it is already running, or it will first run the\n"
   printf "container and then exec into it. If the image isn't found in your\n"
-  printf "local registry, it will first build the image, then run it, then\n"
-  printf "exec into it. Building Grasshopper can take up to 20 minutes, so\n"
-  printf "make sure it is pre-built before you need it!\n"
+  printf "local registry, it will first pull the image, then run it, then\n"
+  printf "exec into it.\n"
 
   exit 0
 }
@@ -135,7 +147,7 @@ check_name() {
 }
 
 docker_exec() {
-  docker exec -it "${NAME}" /bin/bash
+  docker --config "${DOCK_CONFIG}" exec -it "${NAME}" /bin/bash
 }
 
 docker_kill() {
@@ -150,11 +162,19 @@ docker_build() {
   log "Grab a coffee or a smoke and relax..."
 
   docker_kill
-  docker build --build-arg HOME="/root" -t "${IMAGE}" .
+  docker build --build-arg HOME="${USER_HOME}" -t "${IMAGE}" .
+}
+
+docker_pull() {
+  log "Pulling the newest image!"
+  log "This should only take a few minutes..."
+
+  docker_kill
+  docker pull "${REPO}"
 }
 
 docker_run() {
-  LOCAL_WORKBENCH="$(pwd)""/workbench"
+  LOCAL_WORKBENCH="${SCRIPT_PATH}""/workbench"
 
   if [ ! -d "${LOCAL_WORKBENCH}" ]; then
     mkdir "${LOCAL_WORKBENCH}" || exit 1 # Probably a perms issue...
@@ -186,6 +206,10 @@ main() {
         secret
         exit 0
       fi
+      if [[ "${ARG}" == *"x"* ]]; then
+        docker_kill
+        exit 0
+      fi
       if [[ "${ARG}" == *"b"* ]]; then
         docker_build
         exit 0
@@ -204,7 +228,7 @@ main() {
   # Any other option
   check_repo
   if [[ "${FOUND_REPO}" != "1" ]]; then
-    docker_build
+    docker_pull
   fi
 
   check_image
