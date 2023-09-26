@@ -32,10 +32,16 @@ COPY ./configs/* "${HOME}"/
 COPY ./configs/.* "${HOME}"/
 COPY ./configs/.config "${HOME}"/.config
 
+# Overwrite sources.list
+COPY ./apt_config/sources.list /etc/apt/sources.list
+
 # Update everything
+# Also, add the archs we want for QEMU here
 RUN dpkg --add-architecture i386 &&\
+    dpkg --add-architecture arm64 &&\
     apt -y update  &&\
-    apt -y upgrade
+    apt -y upgrade &&\
+    apt -y install libc6:arm64
 
 # Add a bunch of random things we may need from apt.
 # For some reason, when I try to install too much at once,

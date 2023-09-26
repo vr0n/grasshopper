@@ -138,6 +138,8 @@ alias when="history | grep"
 alias vim="nvim"
 alias binwalk="binwalk --run-as=root"
 
+alias aarch64="qemu-aarch64-static -L /usr/aarch64-linux-gnu/"
+
 # batcat special case
 if type batcat 1>/dev/null 2>/dev/null; then
   alias cat="batcat"
