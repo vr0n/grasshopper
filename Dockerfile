@@ -87,8 +87,10 @@ RUN apt -y install\
     checksec\
     hashcat\
     hexedit\
+    patchelf\
     postgresql\
     procps\
+    sagemath\
     qemu\
     qemu-user-static\
     strace\

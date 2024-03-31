@@ -91,3 +91,11 @@ the docker container to the host-mounted volume path with `sudo`. This
 isn't ideal, but it is the best solution I have now. Obviously, from the 
 host, you can make any changes to the files you want (assuming you have 
 `root`).
+
+## TODO
+
+[X] Add patchelf
+[X] Add sagemath
+[ ] Add RsaCtfTool
+[ ] Actually test binwalk extraction. Sasquatch doesn't work
+[ ] Add pwninit via cargo
