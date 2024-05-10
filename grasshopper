@@ -185,6 +185,7 @@ docker_run() {
     -d\
     -i\
     -t\
+    --privileged\
     --hostname "grasshopper"\
     --name "grasshopper"\
     "${IMAGE}"

@@ -11,6 +11,7 @@ ENV SHELL="/bin/bash"
 
 # build variables
 ARG BINWALK="https://github.com/devttys0/binwalk.git"
+ARG DOCKER_VER="docker-26.1.1.tgz"
 ARG GDB="gdb-13.0.50.20221218"
 ARG GDB_EXT=".tar.xz"
 ARG HOME="/root"
@@ -28,7 +29,7 @@ ARG WORDLIST_DIR_MAIN="/data/wordlists"
 ARG WORDLIST_DIR_LINK="/usr/share/wordlists"
 ARG ROCKYOU_PATH="${WORDLIST_DIR_MAIN}""/Passwords/Leaked-Databases"
 
-WORKDIR "${HOME}""/workbench"
+WORKDIR /tmp 
 
 # Add configurations
 COPY ./configs/* "${HOME}"/
@@ -99,7 +100,10 @@ RUN apt -y install\
 
 # Part 1 (random tools)
 RUN apt -y install\
+    apt-file\
+    asciinema\
     checksec\
+    elfutils\
     hashcat\
     hexedit\
     patchelf\
@@ -161,7 +165,9 @@ RUN python3 -m pip install -r "${PIP_FILE}" &&\
 
 # Add GEF to GDB
 # Sadly, we have to install GDB ourselves for python support
-RUN /bin/bash -c "$(curl -fsSL https://gef.blah.cat/sh)" &&\
+RUN cd /tmp &&\
+    git clone https://github.com/hugsy/gef.git &&\
+    echo source `pwd`/gef/gef.py >> ~/.gdbinit &&\
     git clone https://github.com/scwuaptx/Pwngdb.git --depth 1 ~/Pwngdb &&\
     cat ~/Pwngdb/.gdbinit >> ~/.gdbinit
 
@@ -235,7 +241,20 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup.sh &&\
 RUN rustup update
 RUN cargo install pwninit
 RUN cargo install rustscan
+RUN cargo install --git https://github.com/asciinema/agg
+
+# Install Docker inside of Docker
+RUN wget https://download.docker.com/linux/static/stable/x86_64/docker-26.1.1.tgz &&\
+    tar xzvf /tmp/"${DOCKER_VER}" &&\
+    cp /tmp/docker/* /bin/ &&\
+    dockerd &
+    
+# Update the apt-file database
+RUN apt-file update
+    
+WORKDIR "${HOME}""/workbench"
 
 # Cleanup
 RUN apt clean &&\
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -rf /var/lib/apt/lists/* /var/tmp/*
+#    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

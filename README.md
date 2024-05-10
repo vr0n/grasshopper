@@ -105,3 +105,11 @@ host, you can make any changes to the files you want (assuming you have
 ### Additional v1.3 Update Notes
 
 The size of the image has blown up to just under 18GB. The process of building is time consuming and error prone since some of the installs take a lot of time and Docker seems to throw random errors if a single process lingers around too long. Basically, what we are getting at here is that we can no longer sanely recommend building locally, and we very likely will remove this option from the script in the next release. The option is retained at the moment, since we want people to be able to customize thei grasshopper Dockerfile, but, if this isn't done in advance, you could spend more than an hour building (the build takes 20-30 minutes, but if you encounter timeouts or errors, you just have to try again, which I have had to do 3 or 4 times in the past).
+
+# TODO
+
+- [ ] Add elfutils
+- [ ] Add apt-file
+- [ ] init apt-file (apt-file update). This should be done last
+- [ ] Can we install Docker inside of Docker?
+- [ ] asciinema
