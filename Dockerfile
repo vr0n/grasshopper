@@ -4,7 +4,7 @@ FROM debian:stable-slim
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV HOME="/root"
 ENV XDG_DATA_HOME="/root/.config"
-ENV LANG="en_US.UTF-8"
+ENV LANG C.UTF-8
 ENV LC_ALL="en_US.UTF-8"
 ENV LC_CTYPE="en_US.UTF-8"
 ENV TERM="xterm-256color"
@@ -69,6 +69,7 @@ RUN apt -y install\
 
 # Fix our locale
 RUN sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
+    dpkg-reconfigure locales &&\
     locale-gen en_US.UTF-8 &&\
     dpkg-reconfigure locales
 
