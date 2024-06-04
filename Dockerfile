@@ -1,9 +1,10 @@
-FROM ubuntu:22.04
+FROM debian:stable-slim
 
 # environment variables
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV HOME="/root"
 ENV XDG_DATA_HOME="/root/.config"
+ENV LANG="en_US.UTF-8"
 ENV LC_ALL="en_US.UTF-8"
 ENV LC_CTYPE="en_US.UTF-8"
 ENV TERM="xterm-256color"
@@ -20,6 +21,7 @@ ARG MSF_PATH="/opt/metasploit-framework/bin"
 ARG MSF_SCRIPT="msfinstall"
 ARG R2="https://github.com/radareorg/radare2.git"
 ARG R2_PATH="/radare/radare2/sys"
+ARG R2_PLUGINS="r2ghidra esilsolve r2ghidra-sleigh"
 ARG RSACTFTOOL="https://github.com/RsaCtfTool/RsaCtfTool.git"
 ARG RUST_PATH="${HOME}""/.cargo/bin"
 ARG PIP_FILE="${HOME}""/requirements.txt"
@@ -37,7 +39,7 @@ COPY ./configs/.* "${HOME}"/
 COPY ./configs/.config "${HOME}"/.config
 
 # Overwrite sources.list
-COPY ./apt_config/sources.list /etc/apt/sources.list
+# COPY ./apt_config/sources.list /etc/apt/sources.list
 
 # Update everything
 # Also, add the archs we want for QEMU here
@@ -45,7 +47,7 @@ RUN dpkg --add-architecture i386 &&\
     dpkg --add-architecture arm64 &&\
     apt -y update  &&\
     apt -y upgrade &&\
-    apt -y install libc6:arm64
+    apt -y install libc6:arm64 locales
 
 # Add a bunch of random things we may need from apt.
 # For some reason, when I try to install too much at once,
@@ -73,7 +75,7 @@ RUN sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
 # Next, networking tools
 RUN apt -y install\
     curl\
-    netcat\
+    netcat-openbsd\
     net-tools\
     nmap\
     subnetcalc\
@@ -115,8 +117,9 @@ RUN apt -y install\
     sagemath
     
 # Part 3 (qemu full and user)
+# (changed qemu to qemu-system for debian)
 RUN apt -y install\
-    qemu\
+    qemu-system\
     qemu-user-static
     
 # Part 4 (remaining packages)
@@ -153,6 +156,9 @@ ENV PATH="${VIRTUAL_ENV}""/bin:""${HOME}""/bin:""${RUST_PATH}"":""${PATH}"
 
 RUN apt -y install\
     python3\
+    python3-pyelftools\
+    python3-pycryptodome\
+    python3-gmpy2\
     python3-dev\
     python3-distutils\
     python3-pip\
@@ -226,6 +232,9 @@ RUN mkdir /radare &&\
     git clone "${R2}" &&\
     cd "${R2_PATH}" &&\
     ./install.sh
+
+# Install r2 plugins
+RUN r2pm -ci $R2_PLUGINS
 
 # Install and link RsaCtfTool
 # We have to keep this source dir around, as well
