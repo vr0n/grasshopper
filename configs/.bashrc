@@ -140,6 +140,11 @@ alias binwalk="binwalk --run-as=root"
 
 alias aarch64="qemu-aarch64-static -L /usr/aarch64-linux-gnu/"
 
+# golang
+export PATH=$PATH:$HOME/.local/bin
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:$HOME/go/bin/
+
 # batcat special case
 if type batcat 1>/dev/null 2>/dev/null; then
   alias cat="batcat"

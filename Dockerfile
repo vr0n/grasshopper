@@ -30,6 +30,7 @@ ARG SECLISTS="https://github.com/danielmiessler/SecLists.git"
 ARG WORDLIST_DIR_MAIN="/data/wordlists"
 ARG WORDLIST_DIR_LINK="/usr/share/wordlists"
 ARG ROCKYOU_PATH="${WORDLIST_DIR_MAIN}""/Passwords/Leaked-Databases"
+ARG GOLANG_VER="go1.22.4.linux-amd64.tar.gz"
 
 WORKDIR /tmp 
 
@@ -64,6 +65,7 @@ RUN apt -y install\
     locales\
     software-properties-common\
     tmux\
+    wget\
     trash-cli &&\
     mkdir -p ~/.local/share/Trash
 
@@ -129,6 +131,9 @@ RUN apt -y install\
     wine\
     xz-utils
 
+# Install Golang
+RUN wget https://go.dev/dl/$GOLANG_VER && tar -C /usr/local -xzf $GOLANG_VER && rm $GOLANG_VER
+
 # Let's decide what archs we want in the container
 # by default. Users can install additional ones
 # as needed since the packages are relatively small
@@ -137,7 +142,7 @@ RUN apt -y install\
 
 # Add NodeJS
 RUN cd /tmp &&\
-    curl -sL install-node.vercel.app/lts > ./lts &&\
+   curl -sL install-node.vercel.app/lts > ./lts &&\
     chmod +x ./lts &&\
     ./lts --yes &&\
     rm -rf ./lts
@@ -263,6 +268,10 @@ RUN wget https://download.docker.com/linux/static/stable/x86_64/docker-26.1.1.tg
 RUN apt-file update
     
 WORKDIR "${HOME}""/workbench"
+
+# Some web tools
+RUN /usr/local/go/bin/go install github.com/ffuf/ffuf/v2@latest
+RUN /usr/local/go/bin/go install github.com/jaeles-project/jaeles@latest
 
 # Cleanup
 RUN apt clean &&\
