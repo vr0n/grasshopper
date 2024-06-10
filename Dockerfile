@@ -269,6 +269,11 @@ RUN apt-file update
     
 WORKDIR "${HOME}""/workbench"
 
+# Mobile and RE additionals
+RUN mkdir /opt/jadx
+RUN wget https://github.com/skylot/jadx/releases/download/v1.5.0/jadx-1.5.0.zip -O /opt/jadx && unzip /opt/jadx/jadx-1.5.0.zip -d /opt/jadx
+RUN ln -s /opt/jadx/bin/jadx /usr/bin
+
 # Some web tools
 RUN /usr/local/go/bin/go install github.com/ffuf/ffuf/v2@latest
 RUN /usr/local/go/bin/go install github.com/jaeles-project/jaeles@latest
