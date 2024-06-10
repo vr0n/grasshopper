@@ -1,9 +1,10 @@
-FROM ubuntu:22.04
+FROM debian:stable-slim
 
 # environment variables
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV HOME="/root"
 ENV XDG_DATA_HOME="/root/.config"
+ENV LANG C.UTF-8
 ENV LC_ALL="en_US.UTF-8"
 ENV LC_CTYPE="en_US.UTF-8"
 ENV TERM="xterm-256color"
@@ -20,6 +21,7 @@ ARG MSF_PATH="/opt/metasploit-framework/bin"
 ARG MSF_SCRIPT="msfinstall"
 ARG R2="https://github.com/radareorg/radare2.git"
 ARG R2_PATH="/radare/radare2/sys"
+ARG R2_PLUGINS="r2ghidra esilsolve r2ghidra-sleigh"
 ARG RSACTFTOOL="https://github.com/RsaCtfTool/RsaCtfTool.git"
 ARG RUST_PATH="${HOME}""/.cargo/bin"
 ARG PIP_FILE="${HOME}""/requirements.txt"
@@ -28,6 +30,7 @@ ARG SECLISTS="https://github.com/danielmiessler/SecLists.git"
 ARG WORDLIST_DIR_MAIN="/data/wordlists"
 ARG WORDLIST_DIR_LINK="/usr/share/wordlists"
 ARG ROCKYOU_PATH="${WORDLIST_DIR_MAIN}""/Passwords/Leaked-Databases"
+ARG GOLANG_VER="go1.22.4.linux-amd64.tar.gz"
 
 WORKDIR /tmp 
 
@@ -37,7 +40,7 @@ COPY ./configs/.* "${HOME}"/
 COPY ./configs/.config "${HOME}"/.config
 
 # Overwrite sources.list
-COPY ./apt_config/sources.list /etc/apt/sources.list
+# COPY ./apt_config/sources.list /etc/apt/sources.list
 
 # Update everything
 # Also, add the archs we want for QEMU here
@@ -45,7 +48,7 @@ RUN dpkg --add-architecture i386 &&\
     dpkg --add-architecture arm64 &&\
     apt -y update  &&\
     apt -y upgrade &&\
-    apt -y install libc6:arm64
+    apt -y install libc6:arm64 locales
 
 # Add a bunch of random things we may need from apt.
 # For some reason, when I try to install too much at once,
@@ -62,18 +65,20 @@ RUN apt -y install\
     locales\
     software-properties-common\
     tmux\
+    wget\
     trash-cli &&\
     mkdir -p ~/.local/share/Trash
 
 # Fix our locale
 RUN sed -i '/^#.*en_US.UTF-8.*/s/^#//' /etc/locale.gen &&\
+    dpkg-reconfigure locales &&\
     locale-gen en_US.UTF-8 &&\
     dpkg-reconfigure locales
 
 # Next, networking tools
 RUN apt -y install\
     curl\
-    netcat\
+    netcat-openbsd\
     net-tools\
     nmap\
     subnetcalc\
@@ -115,8 +120,9 @@ RUN apt -y install\
     sagemath
     
 # Part 3 (qemu full and user)
+# (changed qemu to qemu-system for debian)
 RUN apt -y install\
-    qemu\
+    qemu-system\
     qemu-user-static
     
 # Part 4 (remaining packages)
@@ -124,6 +130,9 @@ RUN apt -y install\
     strace\
     wine\
     xz-utils
+
+# Install Golang
+RUN wget https://go.dev/dl/$GOLANG_VER && tar -C /usr/local -xzf $GOLANG_VER && rm $GOLANG_VER
 
 # Let's decide what archs we want in the container
 # by default. Users can install additional ones
@@ -133,7 +142,7 @@ RUN apt -y install\
 
 # Add NodeJS
 RUN cd /tmp &&\
-    curl -sL install-node.vercel.app/lts > ./lts &&\
+   curl -sL install-node.vercel.app/lts > ./lts &&\
     chmod +x ./lts &&\
     ./lts --yes &&\
     rm -rf ./lts
@@ -153,6 +162,9 @@ ENV PATH="${VIRTUAL_ENV}""/bin:""${HOME}""/bin:""${RUST_PATH}"":""${PATH}"
 
 RUN apt -y install\
     python3\
+    python3-pyelftools\
+    python3-pycryptodome\
+    python3-gmpy2\
     python3-dev\
     python3-distutils\
     python3-pip\
@@ -227,6 +239,9 @@ RUN mkdir /radare &&\
     cd "${R2_PATH}" &&\
     ./install.sh
 
+# Install r2 plugins
+RUN r2pm -ci $R2_PLUGINS
+
 # Install and link RsaCtfTool
 # We have to keep this source dir around, as well
 RUN cd / &&\
@@ -253,6 +268,15 @@ RUN wget https://download.docker.com/linux/static/stable/x86_64/docker-26.1.1.tg
 RUN apt-file update
     
 WORKDIR "${HOME}""/workbench"
+
+# Mobile and RE additionals
+RUN mkdir /opt/jadx
+RUN wget https://github.com/skylot/jadx/releases/download/v1.5.0/jadx-1.5.0.zip -O /opt/jadx && unzip /opt/jadx/jadx-1.5.0.zip -d /opt/jadx
+RUN ln -s /opt/jadx/bin/jadx /usr/bin
+
+# Some web tools
+RUN /usr/local/go/bin/go install github.com/ffuf/ffuf/v2@latest
+RUN /usr/local/go/bin/go install github.com/jaeles-project/jaeles@latest
 
 # Cleanup
 RUN apt clean &&\
