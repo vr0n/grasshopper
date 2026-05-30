@@ -25,6 +25,7 @@ REPO="ghcr.io/vr0n/grasshopper"
 NAME="grasshopper"
 TAG="latest"
 IMAGE="${REPO}"":""${TAG}"
+PRIVILEGED=0
 
 usage() {
   printf "Usage: %s [OPTIONS]\n" "${0}"
@@ -33,6 +34,7 @@ usage() {
   printf "  -d    Build the container before running (this can take 30 minutes)\n"
   printf "  -h    Print this message and exit\n"
   printf "  -k    Kill any containers that exist before running\n"
+  printf "  -p    Run privileged (--privileged + --network=host)\n"
   printf "  -x    Kill any containers and exit\n"
   printf "\n"
   printf "Grasshopper is intended to be a temporary workbench for solving\n"
@@ -177,15 +179,22 @@ docker_run() {
     mkdir "${LOCAL_WORKBENCH}" || exit 1 # Probably a perms issue...
   fi
 
+  # Least-privilege defaults: SYS_PTRACE + seccomp=unconfined are enough for
+  # gdb/ptrace and pwntools. The -p flag opts into the old privileged behavior.
+  PRIV_ARGS="--cap-add=SYS_PTRACE --security-opt seccomp=unconfined"
+  if [[ "${PRIVILEGED}" == "1" ]]; then
+    info "Running privileged (--privileged + --network=host)"
+    PRIV_ARGS="--privileged --network=host"
+  fi
+
   docker run\
-    --network=host\
+    ${PRIV_ARGS}\
     -v "${LOCAL_WORKBENCH}":"${WORKBENCH}"\
     -e LANG="en_US.UTF-8"\
     --rm\
     -d\
     -i\
     -t\
-    --privileged\
     --hostname "grasshopper"\
     --name "grasshopper"\
     "${IMAGE}"
@@ -211,6 +220,11 @@ main() {
       if [[ "${ARG}" == *"b"* ]]; then
         docker_build
         exit 0
+      fi
+
+      # Opt into privileged mode
+      if [[ "${ARG}" == *"p"* ]]; then
+        PRIVILEGED=1
       fi
 
       # Kill and Build

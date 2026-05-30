@@ -1,0 +1,7 @@
+.git
+.github
+workbench
+docker_config
+README.md
+*.md
+!AGENTS.md
